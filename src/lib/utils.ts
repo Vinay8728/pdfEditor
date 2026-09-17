@@ -25,7 +25,8 @@ export function uid(prefix = 'id'): string {
 
 /** Strips a trailing extension so we can build "<name>-merged.pdf" style outputs. */
 export function baseName(fileName: string): string {
-  return fileName.replace(/\.[^./\]+$/, '') || 'document';
+  // Trim the final extension only — not a dot inside a directory name.
+  return fileName.replace(/\.[^.\\/]+$/, '') || 'document';
 }
 
 export function percent(done: number, total: number): number {

@@ -22,26 +22,27 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Typecheck
-        id: tsc
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          echo "===== TYPECHECK =====" > ci-report.txt
-          npm run typecheck 2>&1 | tee -a ci-report.txt
-
+      # Build runs first: it generates next-env.d.ts, which the standalone
+      # typecheck needs in order to resolve Next's ambient module declarations.
       - name: Build static export
         id: build
         continue-on-error: true
         run: |
           set -o pipefail
-          echo "" >> ci-report.txt
-          echo "===== BUILD =====" >> ci-report.txt
+          echo "===== BUILD =====" > ci-report.txt
           npm run build 2>&1 | tee -a ci-report.txt
 
-      - name: Verify export output
-        id: verify
+      - name: Typecheck
+        id: tsc
         continue-on-error: true
+        run: |
+          set -o pipefail
+          echo "" >> ci-report.txt
+          echo "===== TYPECHECK =====" >> ci-report.txt
+          npm run typecheck 2>&1 | tee -a ci-report.txt
+
+      - name: Verify export output
+        if: always()
         run: |
           {
             echo ""
@@ -49,10 +50,11 @@ jobs:
             test -f out/index.html && echo "out/index.html OK" || echo "MISSING out/index.html"
             test -f out/pdf.worker.min.mjs && echo "pdf worker OK" || echo "MISSING pdf worker"
             echo "HTML pages: $(find out -name '*.html' 2>/dev/null | wc -l)"
+            find out -name '*.html' 2>/dev/null | sort | head -40
           } >> ci-report.txt
 
       # The report is published to its own branch so the full compiler output can
-      # be read over plain HTTPS without needing an authenticated log download.
+      # be read over plain HTTPS without an authenticated log download.
       - name: Publish report
         if: always()
         run: |
