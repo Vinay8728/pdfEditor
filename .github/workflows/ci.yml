@@ -18,6 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
@@ -41,6 +42,22 @@ jobs:
           echo "===== TYPECHECK =====" >> ci-report.txt
           npm run typecheck 2>&1 | tee -a ci-report.txt
 
+      - name: Install browser
+        if: steps.build.outcome == 'success'
+        run: npx playwright install --with-deps chromium
+
+      # Drives the real static export in a real browser: pdf.js worker, pdf-lib,
+      # canvas and downloads, asserting on the bytes that come back out.
+      - name: End-to-end tests
+        id: e2e
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          echo "" >> ci-report.txt
+          echo "===== E2E =====" >> ci-report.txt
+          npm run test:e2e 2>&1 | tee -a ci-report.txt
+
       - name: Verify export output
         if: always()
         run: |
@@ -50,13 +67,21 @@ jobs:
             test -f out/index.html && echo "out/index.html OK" || echo "MISSING out/index.html"
             test -f out/pdf.worker.min.mjs && echo "pdf worker OK" || echo "MISSING pdf worker"
             echo "HTML pages: $(find out -name '*.html' 2>/dev/null | wc -l)"
-            find out -name '*.html' 2>/dev/null | sort | head -40
           } >> ci-report.txt
 
-      # The report is published to its own branch so the full compiler output can
-      # be read over plain HTTPS without an authenticated log download.
-      - name: Publish report
-        if: always()
+      - name: Upload test report
+        if: steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      # On failure the full output is pushed to its own branch, so it can be read
+      # over plain HTTPS without an authenticated log download. Successful runs
+      # leave no trace.
+      - name: Publish failure report
+        if: steps.build.outcome == 'failure' || steps.tsc.outcome == 'failure' || steps.e2e.outcome == 'failure'
         run: |
           cp ci-report.txt "$RUNNER_TEMP/ci-report.txt"
           git config user.name "github-actions[bot]"
@@ -69,7 +94,7 @@ jobs:
           git push -f origin ci-report
 
       - name: Fail if anything broke
-        if: steps.tsc.outcome == 'failure' || steps.build.outcome == 'failure'
+        if: steps.build.outcome == 'failure' || steps.tsc.outcome == 'failure' || steps.e2e.outcome == 'failure'
         run: |
-          echo "::error::typecheck or build failed — see the ci-report branch"
+          echo "::error::build, typecheck or e2e failed — see the ci-report branch"
           exit 1

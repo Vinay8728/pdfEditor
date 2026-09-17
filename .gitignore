@@ -13,3 +13,6 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 public/pdf.worker.min.mjs
 public/pdfjs/
+
+playwright-report/
+test-results/
