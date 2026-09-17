@@ -2,10 +2,12 @@
 
 import { create } from 'zustand';
 import type { EditorObject } from './pdf/annotations';
+import type { TextEdit } from './pdf/editText';
 import { uid } from './utils';
 
 export type EditorTool =
   | 'select'
+  | 'edittext'
   | 'text'
   | 'image'
   | 'signature'
@@ -26,11 +28,6 @@ export interface PageGeometry {
   rotation: number;
 }
 
-interface HistoryEntry {
-  objects: EditorObject[];
-  redactions: RedactionRect[];
-}
-
 export interface RedactionRect {
   id: string;
   pageIndex: number;
@@ -38,6 +35,12 @@ export interface RedactionRect {
   y: number;
   width: number;
   height: number;
+}
+
+interface HistoryEntry {
+  objects: EditorObject[];
+  redactions: RedactionRect[];
+  textEdits: Record<string, TextEdit>;
 }
 
 interface EditorState {
@@ -51,6 +54,8 @@ interface EditorState {
   // Canvas state
   objects: EditorObject[];
   redactions: RedactionRect[];
+  /** Replacements for text that was already in the PDF, keyed by run id. */
+  textEdits: Record<string, TextEdit>;
   selectedId: string | null;
   activeTool: EditorTool;
   currentPage: number;
@@ -97,6 +102,9 @@ interface EditorState {
   addRedaction: (rect: Omit<RedactionRect, 'id'>) => void;
   removeRedaction: (id: string) => void;
 
+  setTextEdit: (edit: TextEdit) => void;
+  clearTextEdit: (id: string) => void;
+
   commit: () => void;
   undo: () => void;
   redo: () => void;
@@ -108,7 +116,11 @@ interface EditorState {
 const HISTORY_LIMIT = 60;
 
 function snapshot(state: EditorState): HistoryEntry {
-  return { objects: state.objects, redactions: state.redactions };
+  return {
+    objects: state.objects,
+    redactions: state.redactions,
+    textEdits: state.textEdits,
+  };
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -120,6 +132,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   objects: [],
   redactions: [],
+  textEdits: {},
   selectedId: null,
   activeTool: 'select',
   currentPage: 0,
@@ -149,6 +162,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       password,
       objects: [],
       redactions: [],
+      textEdits: {},
       selectedId: null,
       currentPage: 0,
       past: [],
@@ -164,13 +178,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       geometry: [],
       objects: [],
       redactions: [],
+      textEdits: {},
       selectedId: null,
       currentPage: 0,
       past: [],
       future: [],
     }),
 
-  setTool: (activeTool) => set({ activeTool, selectedId: activeTool === 'select' ? get().selectedId : null }),
+  setTool: (activeTool) =>
+    set({ activeTool, selectedId: activeTool === 'select' ? get().selectedId : null }),
   setCurrentPage: (currentPage) => set({ currentPage }),
   setZoom: (zoom) => set({ zoom: Math.min(4, Math.max(0.2, zoom)) }),
   setStyle: (patch) => set((state) => ({ style: { ...state.style, ...patch } })),
@@ -243,6 +259,34 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       redactions: state.redactions.filter((rect) => rect.id !== id),
     })),
 
+  /** Records a replacement for a run of text that was already in the PDF. */
+  setTextEdit: (edit) =>
+    set((state) => {
+      // Editing back to the original value drops the edit entirely, so the
+      // page is left exactly as it was rather than patched with itself.
+      const next = { ...state.textEdits };
+      if (edit.text === edit.original) delete next[edit.id];
+      else next[edit.id] = edit;
+
+      return {
+        past: [...state.past, snapshot(state)].slice(-HISTORY_LIMIT),
+        future: [],
+        textEdits: next,
+      };
+    }),
+
+  clearTextEdit: (id) =>
+    set((state) => {
+      if (!state.textEdits[id]) return state;
+      const next = { ...state.textEdits };
+      delete next[id];
+      return {
+        past: [...state.past, snapshot(state)].slice(-HISTORY_LIMIT),
+        future: [],
+        textEdits: next,
+      };
+    }),
+
   commit: () =>
     set((state) => ({
       past: [...state.past, snapshot(state)].slice(-HISTORY_LIMIT),
@@ -258,6 +302,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         future: [snapshot(state), ...state.future].slice(0, HISTORY_LIMIT),
         objects: previous.objects,
         redactions: previous.redactions,
+        textEdits: previous.textEdits,
         selectedId: null,
       };
     }),
@@ -271,6 +316,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         future: state.future.slice(1),
         objects: next.objects,
         redactions: next.redactions,
+        textEdits: next.textEdits,
         selectedId: null,
       };
     }),
@@ -284,6 +330,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       future: [],
       objects: [],
       redactions: [],
+      textEdits: {},
       selectedId: null,
     })),
 }));

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Download, type Page } from '@playwright/test';
-import { isEncrypted, makeImage, makePdf, pageCountOf } from './fixtures';
+import { fixtureDir, isEncrypted, makeImage, makePdf, pageCountOf } from './fixtures';
 
 /**
  * End-to-end checks against the real static export.
@@ -226,6 +226,51 @@ test.describe('editor', () => {
     await page.getByRole('button', { name: 'Next page' }).click();
     await expect(page.getByText('Page 2 of 3')).toBeVisible();
 
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('editing text already in the PDF', () => {
+  test('replaces a run and the change survives into the saved file', async ({ page }) => {
+    const errors = guardConsole(page);
+    const source = await makePdf('inplace.pdf', 1, 'Original');
+
+    await page.goto('/editor/');
+    await page.locator('input[type="file"]').first().setInputFiles(source);
+    await expect(page.getByText('Page 1 of 1')).toBeVisible({ timeout: 30_000 });
+
+    await page.getByRole('button', { name: 'Edit text', exact: true }).click();
+
+    // The run is discovered by reading the page's own text layer.
+    const run = page.getByRole('button', { name: 'Edit text: Original 1' });
+    await expect(run).toBeVisible({ timeout: 30_000 });
+    await run.click();
+
+    const input = page.getByRole('textbox', { name: 'Edit text: Original 1' });
+    await input.fill('Replaced 99');
+    await input.press('Enter');
+
+    await expect(page.getByText('1 text changes', { exact: false }).first()).toBeVisible();
+
+    const edited = await download(page, async () => {
+      await page.getByRole('button', { name: 'Apply changes' }).click();
+    });
+    const editedPath = fixtureDir + '/edited.pdf';
+    await edited.saveAs(editedPath);
+
+    // Read the result back through the app's own extractor, which is the only
+    // honest way to prove the text in the file actually changed.
+    await page.goto('/t/extract-text/');
+    await page.locator('input[type="file"]').first().setInputFiles(editedPath);
+    await expect(page.getByText('edited.pdf')).toBeVisible();
+
+    const extracted = await download(page, async () => {
+      await page.getByRole('button', { name: 'Extract text' }).click();
+    });
+    const text = new TextDecoder().decode(await bytesOf(extracted));
+
+    expect(text).toContain('Replaced 99');
+    expect(text).not.toContain('Original 1');
     expect(errors).toEqual([]);
   });
 });

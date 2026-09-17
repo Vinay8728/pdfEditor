@@ -3,7 +3,7 @@ import { BlendMode, LineCapStyle, PDFName, PDFString, degrees, rgb } from './lib
 import type { PDFDocument, PDFPage } from './lib';
 import { embedFont, sanitizeWinAnsi, wrapText } from './fonts';
 import { embedImageAuto } from './images';
-import { uprightAngle, visualSize, visualToUser } from './geometry';
+import { placeBox, placePoint, uprightAngle, visualSize, visualToUser } from './geometry';
 import { hexToRgb01 } from '../utils';
 import type { EditorObject, TextObject } from './annotations';
 
@@ -14,67 +14,8 @@ import type { EditorObject, TextObject } from './annotations';
  * crisp at any zoom — rather than flattening the overlay to a bitmap.
  */
 
-interface Placement {
-  x: number;
-  y: number;
-  angle: number;
-}
 
-/**
- * Positions a box so it lands exactly where the user put it on screen.
- *
- * `vxLeft`/`vyTop` are visual points from the page's top-left. pdf-lib draws
- * from an object's bottom-left corner and rotates counter-clockwise about that
- * point, so both the page's own /Rotate and the object's rotation are folded in
- * here, about the box's centre.
- */
-function placeBox(
-  vxLeft: number,
-  vyTop: number,
-  boxWidth: number,
-  boxHeight: number,
-  pageWidth: number,
-  pageHeight: number,
-  pageRotation: number,
-  objectRotation = 0,
-): Placement {
-  const visual = visualSize(pageWidth, pageHeight, pageRotation);
 
-  // Flip to a bottom-left origin within visual space.
-  const vyBottom = visual.height - (vyTop + boxHeight);
-
-  // Rotate the box about its own centre. Object rotation is clockwise on screen,
-  // which is negative in PDF's counter-clockwise convention.
-  const theta = (-objectRotation * Math.PI) / 180;
-  const cos = Math.cos(theta);
-  const sin = Math.sin(theta);
-  const halfW = boxWidth / 2;
-  const halfH = boxHeight / 2;
-  const centreVx = vxLeft + halfW;
-  const centreVy = vyBottom + halfH;
-
-  const anchorVx = centreVx - (halfW * cos - halfH * sin);
-  const anchorVy = centreVy - (halfW * sin + halfH * cos);
-
-  const point = visualToUser(anchorVx, anchorVy, pageWidth, pageHeight, pageRotation);
-  return {
-    x: point.x,
-    y: point.y,
-    angle: uprightAngle(pageRotation) - objectRotation,
-  };
-}
-
-/** Maps a bare visual point (no box) into user space. */
-function placePoint(
-  vx: number,
-  vyTop: number,
-  pageWidth: number,
-  pageHeight: number,
-  pageRotation: number,
-) {
-  const visual = visualSize(pageWidth, pageHeight, pageRotation);
-  return visualToUser(vx, visual.height - vyTop, pageWidth, pageHeight, pageRotation);
-}
 
 type AnyDoc = PDFDocument;
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useEditorStore, type EditorTool } from '@/lib/editorStore';
 import type { EditorObject } from '@/lib/pdf/annotations';
+import { cn } from '@/lib/utils';
 
 /**
  * The interactive editing layer, drawn with Fabric.js on top of the rendered
@@ -386,7 +387,13 @@ export function FabricOverlay({
   // wrapper — putting it on the canvas itself leaves the wrapper in normal flow,
   // where it doubles the height of the page sheet and covers the controls below.
   return (
-    <div className="absolute left-0 top-0">
+    <div
+      className={cn(
+        'absolute left-0 top-0',
+        // The text-edit layer sits above this one and needs the clicks.
+        activeTool === 'edittext' && 'pointer-events-none',
+      )}
+    >
       <canvas ref={canvasElementRef} width={widthPx} height={heightPx} />
     </div>
   );

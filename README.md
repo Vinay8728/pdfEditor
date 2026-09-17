@@ -63,7 +63,8 @@ back to upstream `pdf-lib` is a one-file change.
 | **Organise pages** | Drag-and-drop reorder, rotate, duplicate, delete, extract. |
 | **Rotate** | 90° steps, whole document or a page selection, written into the file. |
 | **Crop** | Uniform margins in points or percent; sets both CropBox and MediaBox. |
-| **Edit** | Text, images, rectangles, ellipses, lines, arrows, highlights, freehand, links. Exported as **real vector content** — text stays selectable. |
+| **Edit existing text** | Click text that is already in the PDF and change it. Position, size, font, colour and the background behind it are all measured from the page — see below. |
+| **Add** | Text, images, rectangles, ellipses, lines, arrows, highlights, freehand, links. Exported as **real vector content** — text stays selectable. |
 | **Page numbers** | Nine positions, custom format tokens, font, size, colour, start value. |
 | **Watermark** | Text or image; position, angle, opacity, tiling, over or behind content. |
 | **Sign** | Draw, type (four handwriting faces), or upload a photo with white-background knockout. |
@@ -80,6 +81,38 @@ back to upstream `pdf-lib` is a one-file change.
 | **Repair** | Three escalating recovery strategies; tells you which one worked. |
 | **Extract text** | Plain text of every page as `.txt`. |
 | **Document info** | Page count, page sizes, encryption, field count, structural health. |
+
+#### How editing existing text works, and where it falls short
+
+A PDF has no editable text boxes. It stores positioned glyph runs drawn with a
+*subset* of an embedded font — often only the handful of glyphs that page
+actually uses. Rewriting a run in place would mean re-encoding that subset,
+which is not something to attempt in a browser.
+
+So this works the way every browser-based PDF editor works: the original run is
+covered with a patch, and the replacement is drawn on top. Two measurements make
+that convincing, and both are read from the rendered page rather than assumed:
+
+- **The colour behind the text**, sampled from a ring just outside the run, so
+  the patch matches tinted table rows and panels rather than always being white.
+- **The colour of the text itself**, taken from the darkest pixel inside the run.
+
+Font family, size, weight and slant come from the PDF's own font metadata.
+
+Know the limits before relying on it:
+
+- The replacement is drawn in a standard font (Helvetica, Times or Courier), not
+  the document's original typeface. On a distinctive font, it will not match.
+- A run sitting on a photo, gradient or patterned background will show its patch.
+- Text much longer than the original is shrunk to fit rather than overrunning
+  whatever sits beside it.
+- Reflow does not happen. Editing one line does not move the paragraph around it.
+
+For a payslip, invoice, form or report — flat backgrounds, ordinary fonts — the
+result is clean. **Always look at the output before sending it on.**
+
+See [`src/lib/pdf/textLayer.ts`](src/lib/pdf/textLayer.ts) for the extraction and
+[`src/lib/pdf/editText.ts`](src/lib/pdf/editText.ts) for the patching.
 
 #### Redaction is real
 

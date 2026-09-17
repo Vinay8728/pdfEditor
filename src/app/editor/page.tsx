@@ -8,6 +8,7 @@ import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { FabricOverlay } from '@/components/editor/FabricOverlay';
 import { PdfPageRender } from '@/components/editor/PdfPageRender';
 import { SignatureDialog } from '@/components/editor/SignatureDialog';
+import { TextEditLayer } from '@/components/editor/TextEditLayer';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Alert, Button, ProgressBar, Spinner } from '@/components/ui/controls';
 import { usePdfThumbnails } from '@/lib/usePdfThumbnails';
@@ -28,6 +29,8 @@ export default function EditorPage() {
     zoom,
     objects,
     redactions,
+    textEdits,
+    activeTool,
     setCurrentPage,
     setDocument,
     closeDocument,
@@ -122,14 +125,39 @@ export default function EditorPage() {
     setError(null);
     try {
       let output = bytes;
+      const edits = Object.values(textEdits);
+
+      // Each stage re-saves the document unencrypted, so the password is only
+      // needed by whichever stage happens to run first.
+      let stagePassword = password;
+      const consume = () => {
+        const value = stagePassword;
+        stagePassword = undefined;
+        return value;
+      };
+
+      // Existing text is patched first, so anything drawn on top of it stays on
+      // top rather than being covered by a patch.
+      if (edits.length > 0) {
+        setProgress({ label: 'Replacing text in the page', value: 5 });
+        const { applyTextEdits } = await import('@/lib/pdf/editText');
+        output = await applyTextEdits(output, edits, {
+          password: consume(),
+          onProgress: (done, total) =>
+            setProgress({ label: 'Replacing text in the page', value: (done / total) * 40 }),
+        });
+      }
 
       if (objects.length > 0) {
-        setProgress({ label: 'Writing your edits into the PDF', value: 10 });
+        setProgress({ label: 'Writing your edits into the PDF', value: 45 });
         const { applyOverlay } = await import('@/lib/pdf/overlay');
         output = await applyOverlay(output, objects, {
-          password,
+          password: consume(),
           onProgress: (done, total) =>
-            setProgress({ label: 'Writing your edits into the PDF', value: (done / total) * 60 }),
+            setProgress({
+              label: 'Writing your edits into the PDF',
+              value: 45 + (done / total) * 25,
+            }),
         });
       }
 
@@ -147,7 +175,7 @@ export default function EditorPage() {
             height: rect.height,
           })),
           {
-            password: objects.length > 0 ? undefined : password,
+            password: consume(),
             onProgress: (done, total) =>
               setProgress({
                 label: 'Destroying redacted content',
@@ -238,6 +266,10 @@ export default function EditorPage() {
   const displayHeight = page ? page.height * zoom : 0;
   const pageObjects = objects.filter((object) => object.pageIndex === currentPage).length;
   const pageRedactions = redactions.filter((rect) => rect.pageIndex === currentPage).length;
+  const allTextEdits = Object.values(textEdits);
+  const pageTextEdits = allTextEdits.filter((edit) => edit.pageIndex === currentPage).length;
+  const nothingToApply =
+    objects.length === 0 && redactions.length === 0 && allTextEdits.length === 0;
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
@@ -277,6 +309,14 @@ export default function EditorPage() {
                 heightPx={displayHeight}
                 zoom={zoom}
               />
+              {activeTool === 'edittext' && (
+                <TextEditLayer
+                  pageIndex={currentPage}
+                  widthPx={displayWidth}
+                  heightPx={displayHeight}
+                  zoom={zoom}
+                />
+              )}
             </div>
           )}
 
@@ -308,12 +348,14 @@ export default function EditorPage() {
         <aside className="hidden w-72 shrink-0 flex-col border-l border-line bg-surface p-4 lg:flex">
           <h2 className="text-sm font-semibold">{fileName}</h2>
           <p className="mt-0.5 text-xs text-muted">
-            {pageCount} pages · {objects.length} edits · {redactions.length} redactions
+            {pageCount} pages · {allTextEdits.length} text changes · {objects.length} additions ·{' '}
+            {redactions.length} redactions
           </p>
 
           <div className="mt-4 space-y-2 text-xs text-muted">
             <p>
-              This page: {pageObjects} edit{pageObjects === 1 ? '' : 's'}
+              This page: {pageTextEdits} text change{pageTextEdits === 1 ? '' : 's'},{' '}
+              {pageObjects} addition{pageObjects === 1 ? '' : 's'}
               {pageRedactions > 0 && `, ${pageRedactions} redaction${pageRedactions === 1 ? '' : 's'}`}
             </p>
           </div>
@@ -355,7 +397,7 @@ export default function EditorPage() {
               className="w-full"
               onClick={applyChanges}
               loading={busy}
-              disabled={busy || (objects.length === 0 && redactions.length === 0)}
+              disabled={busy || nothingToApply}
               icon={<Download className="h-4 w-4" />}
             >
               Apply changes
@@ -367,7 +409,7 @@ export default function EditorPage() {
                 variant="ghost"
                 className="flex-1"
                 onClick={clearAll}
-                disabled={objects.length === 0 && redactions.length === 0}
+                disabled={nothingToApply}
               >
                 Clear edits
               </Button>
@@ -395,14 +437,14 @@ export default function EditorPage() {
       {/* Mobile action bar — the right-hand panel is hidden below lg. */}
       <div className="flex items-center gap-2 border-t border-line bg-surface px-3 py-2 lg:hidden">
         <span className="truncate text-xs text-muted">
-          {objects.length} edits · {redactions.length} redactions
+          {allTextEdits.length} text changes · {objects.length} additions
         </span>
         <Button
           size="sm"
           className="ml-auto"
           onClick={applyChanges}
           loading={busy}
-          disabled={busy || (objects.length === 0 && redactions.length === 0)}
+          disabled={busy || nothingToApply}
           icon={<Download className="h-4 w-4" />}
         >
           Apply

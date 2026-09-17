@@ -96,3 +96,78 @@ export function rotatedBounds(width: number, height: number, degrees: number) {
     height: width * sin + height * cos,
   };
 }
+
+export interface Placement {
+  x: number;
+  y: number;
+  angle: number;
+}
+
+/**
+ * Positions a box so it lands exactly where it appears on screen.
+ *
+ * `vxLeft`/`vyTop` are visual points measured from the page's TOP-left — the
+ * space the editor, redaction boxes and extracted text runs all work in.
+ * pdf-lib draws from an object's bottom-left corner and rotates
+ * counter-clockwise about that point, so the page's own /Rotate and the
+ * object's own rotation are both folded in here, about the box's centre.
+ */
+export function placeBox(
+  vxLeft: number,
+  vyTop: number,
+  boxWidth: number,
+  boxHeight: number,
+  pageWidth: number,
+  pageHeight: number,
+  pageRotation: number,
+  objectRotation = 0,
+): Placement {
+  const visual = visualSize(pageWidth, pageHeight, pageRotation);
+
+  // Flip to a bottom-left origin within visual space.
+  const vyBottom = visual.height - (vyTop + boxHeight);
+
+  // Object rotation is clockwise on screen, which is negative in PDF's
+  // counter-clockwise convention.
+  const theta = (-objectRotation * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const halfW = boxWidth / 2;
+  const halfH = boxHeight / 2;
+  const centreVx = vxLeft + halfW;
+  const centreVy = vyBottom + halfH;
+
+  const anchorVx = centreVx - (halfW * cos - halfH * sin);
+  const anchorVy = centreVy - (halfW * sin + halfH * cos);
+
+  const point = visualToUser(anchorVx, anchorVy, pageWidth, pageHeight, pageRotation);
+  return {
+    x: point.x,
+    y: point.y,
+    angle: uprightAngle(pageRotation) - objectRotation,
+  };
+}
+
+/** Maps a bare point (no box) from top-left visual space into user space. */
+export function placePoint(
+  vx: number,
+  vyTop: number,
+  pageWidth: number,
+  pageHeight: number,
+  pageRotation: number,
+) {
+  const visual = visualSize(pageWidth, pageHeight, pageRotation);
+  return visualToUser(vx, visual.height - vyTop, pageWidth, pageHeight, pageRotation);
+}
+
+/** 2D affine matrix multiply, matching pdf.js's own Util.transform. */
+export function multiplyTransform(a: number[], b: number[]): number[] {
+  return [
+    a[0] * b[0] + a[2] * b[1],
+    a[1] * b[0] + a[3] * b[1],
+    a[0] * b[2] + a[2] * b[3],
+    a[1] * b[2] + a[3] * b[3],
+    a[0] * b[4] + a[2] * b[5] + a[4],
+    a[1] * b[4] + a[3] * b[5] + a[5],
+  ];
+}

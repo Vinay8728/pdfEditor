@@ -12,6 +12,7 @@ import {
   Pencil,
   Redo2,
   Square,
+  TextCursorInput,
   Trash2,
   Type,
   Undo2,
@@ -29,7 +30,10 @@ const GROUPS: { label: string; tools: { id: EditorTool; label: string; Icon: typ
   },
   {
     label: 'Text',
-    tools: [{ id: 'text', label: 'Text', Icon: Type }],
+    tools: [
+      { id: 'edittext', label: 'Edit text', Icon: TextCursorInput },
+      { id: 'text', label: 'Add text', Icon: Type },
+    ],
   },
   {
     label: 'Images & sign',
@@ -266,6 +270,13 @@ export function EditorToolbar({
               aria-label="Highlight colour"
             />
           </label>
+        )}
+
+        {activeTool === 'edittext' && (
+          <span className="text-xs text-muted">
+            Click any text on the page to change it. The replacement keeps the original position,
+            size and colour — check the result before sending the file on.
+          </span>
         )}
 
         {activeTool === 'redact' && (

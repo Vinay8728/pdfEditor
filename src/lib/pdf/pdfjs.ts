@@ -10,11 +10,20 @@ import { withBase } from '../basePath';
 
 export interface PdfTextItem {
   str: string;
+  /** Key into the text content's `styles` map. */
+  fontName?: string;
   /** [scaleX, skewX, skewY, scaleY, translateX, translateY] in PDF user space. */
   transform: number[];
   width: number;
   height: number;
   hasEOL?: boolean;
+}
+
+export interface PdfTextStyle {
+  fontFamily?: string;
+  ascent?: number;
+  descent?: number;
+  vertical?: boolean;
 }
 
 export interface PdfViewport {
@@ -35,7 +44,7 @@ export interface PdfPageProxy {
     viewport: PdfViewport;
     background?: string;
   }): { promise: Promise<void>; cancel(): void };
-  getTextContent(): Promise<{ items: PdfTextItem[] }>;
+  getTextContent(): Promise<{ items: PdfTextItem[]; styles?: Record<string, PdfTextStyle> }>;
   getAnnotations(params?: { intent?: string }): Promise<Record<string, unknown>[]>;
   cleanup(): void;
 }
