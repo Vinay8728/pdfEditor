@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 247 248 250;
+    --surface: 255 255 255;
+    --surface-2: 241 243 247;
+    --line: 223 227 234;
+    --fg: 22 27 38;
+    --muted: 100 110 128;
+  }
+
+  .dark {
+    --bg: 14 17 23;
+    --surface: 22 26 34;
+    --surface-2: 30 35 45;
+    --line: 45 52 65;
+    --fg: 233 237 243;
+    --muted: 148 158 174;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-bg text-fg antialiased;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  /* Keyboard focus stays visible everywhere; pointer focus does not shout. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-bg;
+  }
+
+  ::selection {
+    @apply bg-brand-500/25;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg
+           placeholder:text-muted/70 focus:border-brand-500 focus:outline-none
+           focus:ring-2 focus:ring-brand-500/30 disabled:opacity-50;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+
+  .toolbar-btn {
+    @apply inline-flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-[11px] font-medium
+           text-muted transition hover:bg-surface2 hover:text-fg
+           aria-pressed:bg-brand-500/12 aria-pressed:text-brand-600
+           dark:aria-pressed:text-brand-300;
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--line)) transparent;
+  }
+
+  .scroll-thin::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .scroll-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full border-[3px] border-solid border-transparent bg-line bg-clip-content;
+  }
+}
+
+/* The page canvas itself is always a white sheet, in either theme. */
+.page-sheet {
+  background: #fff;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.16),
+    0 10px 30px rgb(0 0 0 / 0.12);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

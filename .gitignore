@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+.netlify/
+.env
+.env.local
+.env*.local
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+next-env.d.ts
+tsconfig.tsbuildinfo
+public/pdf.worker.min.mjs
+public/pdfjs/
