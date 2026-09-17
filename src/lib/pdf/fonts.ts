@@ -37,7 +37,7 @@ export function standardFontFor(style: FontStyle = {}): StandardFonts {
 }
 
 export async function embedFont(
-  doc: InstanceType<typeof PDFDocument>,
+  doc: PDFDocument,
   style: FontStyle = {},
 ): Promise<PDFFont> {
   return doc.embedFont(standardFontFor(style));

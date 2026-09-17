@@ -21,7 +21,7 @@ export function detectImageKind(bytes: Uint8Array): ImageKind {
  * so WebP/GIF/BMP/AVIF are transcoded to PNG through a canvas first.
  */
 export async function embedImageAuto(
-  doc: InstanceType<typeof PDFDocument>,
+  doc: PDFDocument,
   bytes: Uint8Array,
 ): Promise<PDFImage> {
   const kind = detectImageKind(bytes);

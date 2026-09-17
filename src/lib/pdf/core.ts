@@ -31,7 +31,7 @@ export async function createDoc() {
 
 /** Standard save settings: object streams keep output small. */
 export async function saveDoc(
-  doc: Awaited<ReturnType<typeof PDFDocument.create>>,
+  doc: PDFDocument,
 ): Promise<Uint8Array> {
   return doc.save({ useObjectStreams: true, addDefaultPage: false });
 }
@@ -43,8 +43,8 @@ export async function readFileBytes(file: File | Blob): Promise<Uint8Array> {
 
 /** Copies metadata that pdf-lib would otherwise drop when rebuilding a document. */
 export function copyMetadata(
-  from: Awaited<ReturnType<typeof PDFDocument.create>>,
-  to: Awaited<ReturnType<typeof PDFDocument.create>>,
+  from: PDFDocument,
+  to: PDFDocument,
 ) {
   try {
     const title = from.getTitle();

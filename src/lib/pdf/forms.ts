@@ -35,7 +35,7 @@ export interface FormFieldInfo {
   rect?: { x: number; y: number; width: number; height: number };
 }
 
-type AnyDoc = InstanceType<typeof PDFDocument>;
+type AnyDoc = PDFDocument;
 
 /** Maps each annotation dictionary to the page it lives on. */
 function buildWidgetPageMap(doc: AnyDoc): Map<unknown, number> {

@@ -76,7 +76,7 @@ function placePoint(
   return visualToUser(vx, visual.height - vyTop, pageWidth, pageHeight, pageRotation);
 }
 
-type AnyDoc = InstanceType<typeof PDFDocument>;
+type AnyDoc = PDFDocument;
 
 async function drawText(
   doc: AnyDoc,
