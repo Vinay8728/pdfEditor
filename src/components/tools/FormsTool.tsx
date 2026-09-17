@@ -204,6 +204,7 @@ export function FormsTool({ files, runJob, busy, setError }: PanelProps) {
                       <TextInput
                         type="number"
                         value={field.x}
+                        aria-label="X position in points"
                         onChange={(event) =>
                           updateNewField(setNewFields, index, { x: Number(event.target.value) })
                         }
@@ -211,6 +212,7 @@ export function FormsTool({ files, runJob, busy, setError }: PanelProps) {
                       <TextInput
                         type="number"
                         value={field.y}
+                        aria-label="Y position in points"
                         onChange={(event) =>
                           updateNewField(setNewFields, index, { y: Number(event.target.value) })
                         }
@@ -222,6 +224,7 @@ export function FormsTool({ files, runJob, busy, setError }: PanelProps) {
                       <TextInput
                         type="number"
                         value={field.width}
+                        aria-label="Width in points"
                         onChange={(event) =>
                           updateNewField(setNewFields, index, { width: Number(event.target.value) })
                         }
@@ -229,6 +232,7 @@ export function FormsTool({ files, runJob, busy, setError }: PanelProps) {
                       <TextInput
                         type="number"
                         value={field.height}
+                        aria-label="Height in points"
                         onChange={(event) =>
                           updateNewField(setNewFields, index, {
                             height: Number(event.target.value),

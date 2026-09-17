@@ -1,6 +1,18 @@
 'use client';
 
-import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import {
+  Children,
+  cloneElement,
+  forwardRef,
+  isValidElement,
+  useId,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from 'react';
 import { AlertTriangle, CheckCircle2, Info, Loader2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +70,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 /*                                   Fields                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * A labelled form control.
+ *
+ * When the child is a single control, the label is wired to it with a generated
+ * id — without that the `<label>` is decorative, and neither a screen reader nor
+ * a click on the text reaches the input. Fields wrapping several controls (a
+ * width/height pair, say) label those individually instead.
+ */
 export function Field({
   label,
   hint,
@@ -71,12 +91,25 @@ export function Field({
   children: ReactNode;
   className?: string;
 }) {
+  const generatedId = useId();
+  // Not Children.only: a Field wrapping a pair of controls is legitimate, it
+  // just labels them individually instead of being associated with one.
+  const only = Children.toArray(children);
+  const child = only.length === 1 ? only[0] : null;
+
+  const labelled = isValidElement(child) && LABELLABLE.has(child.type) && !htmlFor;
+
+  const controlId = htmlFor ?? (labelled ? generatedId : undefined);
+  const content = labelled
+    ? cloneElement(child as ReactElement<{ id?: string }>, { id: controlId })
+    : child;
+
   return (
     <div className={className}>
-      <label className="label" htmlFor={htmlFor}>
+      <label className="label" htmlFor={controlId}>
         {label}
       </label>
-      {children}
+      {content}
       {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </div>
   );
@@ -103,6 +136,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
     );
   },
 );
+
+// Controls that Field can attach a generated id to. Declared here because the
+// components have to exist first; it is only read at render time.
+const LABELLABLE: Set<unknown> = new Set([TextInput, TextArea, Select, 'input', 'select', 'textarea']);
 
 export function Toggle({
   checked,
@@ -183,6 +220,7 @@ export function Slider({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
+        aria-label={label}
         className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-line accent-brand-600"
       />
     </div>
@@ -213,6 +251,7 @@ export function ColorInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           spellCheck={false}
+          aria-label={`${label} hex value`}
         />
       </div>
     </Field>

@@ -381,13 +381,14 @@ export function FabricOverlay({
     });
   }
 
+  // Fabric replaces the canvas with a wrapper div of its own containing two
+  // canvases. Positioning has to go on an element we control *outside* that
+  // wrapper — putting it on the canvas itself leaves the wrapper in normal flow,
+  // where it doubles the height of the page sheet and covers the controls below.
   return (
-    <canvas
-      ref={canvasElementRef}
-      width={widthPx}
-      height={heightPx}
-      className="absolute left-0 top-0"
-    />
+    <div className="absolute left-0 top-0">
+      <canvas ref={canvasElementRef} width={widthPx} height={heightPx} />
+    </div>
   );
 }
 
