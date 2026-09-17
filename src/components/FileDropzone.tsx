@@ -107,13 +107,13 @@ export function FileDropzone({
           'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed text-center transition',
           compact ? 'gap-2 px-4 py-6' : 'gap-3 px-6 py-14',
           dragging
-            ? 'border-brand-500 bg-brand-500/8'
+            ? 'border-brand-500 bg-brand-500/10'
             : 'border-line bg-surface hover:border-brand-400 hover:bg-surface2',
         )}
       >
         <span
           className={cn(
-            'grid place-items-center rounded-full bg-brand-500/12 text-brand-600 dark:text-brand-300',
+            'grid place-items-center rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300',
             compact ? 'h-9 w-9' : 'h-14 w-14',
           )}
         >

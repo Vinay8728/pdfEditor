@@ -114,39 +114,44 @@ export function boundsOf(object: EditorObject): {
   width: number;
   height: number;
 } {
-  if (object.type === 'line' || object.type === 'arrow') {
-    return {
-      x: Math.min(object.x1, object.x2),
-      y: Math.min(object.y1, object.y2),
-      width: Math.abs(object.x2 - object.x1),
-      height: Math.abs(object.y2 - object.y1),
-    };
-  }
+  // A switch on the discriminant keeps every branch narrowed to one member,
+  // which an if-chain does not manage for members whose `type` is itself a union.
+  switch (object.type) {
+    case 'line':
+    case 'arrow':
+      return {
+        x: Math.min(object.x1, object.x2),
+        y: Math.min(object.y1, object.y2),
+        width: Math.abs(object.x2 - object.x1),
+        height: Math.abs(object.y2 - object.y1),
+      };
 
-  if (object.type === 'draw') {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (let i = 0; i < object.points.length; i += 2) {
-      minX = Math.min(minX, object.points[i]);
-      maxX = Math.max(maxX, object.points[i]);
-      minY = Math.min(minY, object.points[i + 1]);
-      maxY = Math.max(maxY, object.points[i + 1]);
+    case 'draw': {
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (let i = 0; i < object.points.length; i += 2) {
+        minX = Math.min(minX, object.points[i]);
+        maxX = Math.max(maxX, object.points[i]);
+        minY = Math.min(minY, object.points[i + 1]);
+        maxY = Math.max(maxY, object.points[i + 1]);
+      }
+      if (!Number.isFinite(minX)) return { x: 0, y: 0, width: 0, height: 0 };
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
     }
-    if (!Number.isFinite(minX)) return { x: 0, y: 0, width: 0, height: 0 };
-    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-  }
 
-  if (object.type === 'text') {
-    const lines = Math.max(1, object.text.split(/\r?\n/).length);
-    return {
-      x: object.x,
-      y: object.y,
-      width: object.width,
-      height: lines * object.fontSize * (object.lineHeight ?? 1.25),
-    };
-  }
+    case 'text': {
+      const lines = Math.max(1, object.text.split(/\r?\n/).length);
+      return {
+        x: object.x,
+        y: object.y,
+        width: object.width,
+        height: lines * object.fontSize * (object.lineHeight ?? 1.25),
+      };
+    }
 
-  return { x: object.x, y: object.y, width: object.width, height: object.height };
+    default:
+      return { x: object.x, y: object.y, width: object.width, height: object.height };
+  }
 }

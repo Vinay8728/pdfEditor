@@ -59,10 +59,21 @@
   }
 
   .toolbar-btn {
-    @apply inline-flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-[11px] font-medium
-           text-muted transition hover:bg-surface2 hover:text-fg
-           aria-pressed:bg-brand-500/12 aria-pressed:text-brand-600
-           dark:aria-pressed:text-brand-300;
+    @apply inline-flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-[11px]
+           font-medium text-muted transition hover:bg-surface2 hover:text-fg
+           disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  /* Written by hand rather than with @apply: the pressed state needs a tint
+     that is not on Tailwind's opacity scale. */
+  .toolbar-btn[aria-pressed='true'] {
+    background-color: rgb(47 131 247 / 0.12);
+    color: #1a64e0;
+  }
+
+  .dark .toolbar-btn[aria-pressed='true'] {
+    background-color: rgb(47 131 247 / 0.18);
+    color: #8ec6ff;
   }
 
   .scroll-thin {

@@ -44,7 +44,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
       </nav>
 
       <header className="mb-7 flex items-start gap-4">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-brand-500/12 text-brand-600 dark:text-brand-300">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
           <tool.Icon className="h-6 w-6" aria-hidden />
         </span>
         <div className="min-w-0">

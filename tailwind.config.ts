@@ -25,13 +25,6 @@ const config: Config = {
           900: '#183b73',
         },
       },
-      // Colour opacity modifiers (`bg-brand-500/12`) resolve against this scale,
-      // which by default only steps in fives. The tints below are the ones the
-      // UI actually uses for subtle surfaces.
-      opacity: {
-        8: '0.08',
-        12: '0.12',
-      },
       fontFamily: {
         sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },

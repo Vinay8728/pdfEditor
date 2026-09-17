@@ -474,7 +474,7 @@ function PageSidebar() {
               className={cn(
                 'relative block w-full rounded-lg border-2 p-1 transition',
                 index === currentPage
-                  ? 'border-brand-500 bg-brand-500/8'
+                  ? 'border-brand-500 bg-brand-500/10'
                   : 'border-transparent hover:border-line',
               )}
             >

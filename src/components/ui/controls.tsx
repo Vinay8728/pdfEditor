@@ -226,16 +226,16 @@ export function ColorInput({
 type AlertTone = 'info' | 'success' | 'warning' | 'error';
 
 const TONES: Record<AlertTone, { className: string; Icon: typeof Info }> = {
-  info: { className: 'border-brand-500/30 bg-brand-500/8 text-brand-700 dark:text-brand-200', Icon: Info },
+  info: { className: 'border-brand-500/30 bg-brand-500/10 text-brand-700 dark:text-brand-200', Icon: Info },
   success: {
-    className: 'border-emerald-500/30 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300',
+    className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
     Icon: CheckCircle2,
   },
   warning: {
-    className: 'border-amber-500/30 bg-amber-500/8 text-amber-700 dark:text-amber-300',
+    className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
     Icon: AlertTriangle,
   },
-  error: { className: 'border-red-500/30 bg-red-500/8 text-red-700 dark:text-red-300', Icon: XCircle },
+  error: { className: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300', Icon: XCircle },
 };
 
 export function Alert({

@@ -25,7 +25,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="border-b border-line bg-gradient-to-b from-brand-500/8 to-transparent">
+      <section className="border-b border-line bg-gradient-to-b from-brand-500/10 to-transparent">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:py-24">
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -69,7 +69,7 @@ export default function HomePage() {
               href={`/t/${tool.slug}/`}
               className="card group flex flex-col gap-2 p-4 transition hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-pop"
             >
-              <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-500/12 text-brand-600 dark:text-brand-300">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-300">
                 <tool.Icon className="h-5 w-5" aria-hidden />
               </span>
               <span className="font-semibold">{tool.name}</span>
@@ -83,7 +83,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 md:grid-cols-3">
           {PROMISES.map(({ Icon, title, body }) => (
             <div key={title}>
-              <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-500/12 text-brand-600 dark:text-brand-300">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-300">
                 <Icon className="h-5 w-5" aria-hidden />
               </span>
               <h3 className="mt-3 font-semibold">{title}</h3>
