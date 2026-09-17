@@ -115,7 +115,33 @@ install.
 ```bash
 npm run typecheck   # tsc --noEmit
 npm run build       # static export into out/
+npm run test:e2e    # Playwright against the real export (needs a build first)
 ```
+
+### Commit a lockfile
+
+There is **no `package-lock.json` in this repo yet**, because it was authored on
+a machine without Node installed. Builds therefore resolve dependency versions
+fresh each time, which means a bad minor release upstream could break a deploy.
+
+Fix it once, either way:
+
+```bash
+npm install && git add package-lock.json && git commit -m "Add lockfile"
+```
+
+Or, without installing Node: open the latest CI run on GitHub, download the
+**package-lock** artifact, drop the file in the project root and commit it.
+After that you can also add `cache: npm` back to the `setup-node` step in
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) for faster builds.
+
+### Tests
+
+[`tests/smoke.spec.ts`](tests/smoke.spec.ts) drives the built site in Chromium
+and asserts on the bytes that come back out — merging a three-page and a
+two-page file must yield five pages, splitting must return a real zip, and
+protecting must produce a file that genuinely will not open without the
+password. They run on every push.
 
 ---
 
