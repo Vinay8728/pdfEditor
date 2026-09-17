@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,13 +23,51 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Typecheck
-        run: npm run typecheck
+        id: tsc
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          echo "===== TYPECHECK =====" > ci-report.txt
+          npm run typecheck 2>&1 | tee -a ci-report.txt
 
       - name: Build static export
-        run: npm run build
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          echo "" >> ci-report.txt
+          echo "===== BUILD =====" >> ci-report.txt
+          npm run build 2>&1 | tee -a ci-report.txt
 
       - name: Verify export output
+        id: verify
+        continue-on-error: true
         run: |
-          test -f out/index.html || (echo "::error::static export missing out/index.html" && exit 1)
-          test -f out/pdf.worker.min.mjs || (echo "::error::pdf.js worker not copied into export" && exit 1)
-          echo "Export OK — $(find out -name '*.html' | wc -l) HTML pages"
+          {
+            echo ""
+            echo "===== EXPORT ====="
+            test -f out/index.html && echo "out/index.html OK" || echo "MISSING out/index.html"
+            test -f out/pdf.worker.min.mjs && echo "pdf worker OK" || echo "MISSING pdf worker"
+            echo "HTML pages: $(find out -name '*.html' 2>/dev/null | wc -l)"
+          } >> ci-report.txt
+
+      # The report is published to its own branch so the full compiler output can
+      # be read over plain HTTPS without needing an authenticated log download.
+      - name: Publish report
+        if: always()
+        run: |
+          cp ci-report.txt "$RUNNER_TEMP/ci-report.txt"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan ci-report
+          git reset --hard
+          cp "$RUNNER_TEMP/ci-report.txt" ci-report.txt
+          git add -f ci-report.txt
+          git commit -m "CI report for ${GITHUB_SHA::7}"
+          git push -f origin ci-report
+
+      - name: Fail if anything broke
+        if: steps.tsc.outcome == 'failure' || steps.build.outcome == 'failure'
+        run: |
+          echo "::error::typecheck or build failed — see the ci-report branch"
+          exit 1

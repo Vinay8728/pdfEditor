@@ -106,7 +106,15 @@ export async function readFormFields(
     let pageIndex: number | undefined;
     let rect: FormFieldInfo['rect'];
     try {
-      const widget = field.acroField.getWidgets()[0];
+      // getWidgets only exists on terminal acro fields, so it is reached
+      // defensively rather than through the base PDFAcroField type.
+      const acro = field.acroField as unknown as {
+        getWidgets?: () => {
+          dict: unknown;
+          getRectangle: () => { x: number; y: number; width: number; height: number };
+        }[];
+      };
+      const widget = acro.getWidgets?.()[0];
       if (widget) {
         pageIndex = widgetPages.get(widget.dict);
         const r = widget.getRectangle();

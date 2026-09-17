@@ -38,6 +38,12 @@ export function FabricOverlay({
   const moduleRef = useRef<FabricModule | null>(null);
   /** Objects array we ourselves just wrote — used to avoid a rebuild loop. */
   const selfWrite = useRef<EditorObject[] | null>(null);
+  /**
+   * Fabric's event handlers are registered once, so they would close over the
+   * zoom from that first render. Reading it from a ref keeps them current.
+   */
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
 
   const objects = useEditorStore((state) => state.objects);
   const redactions = useEditorStore((state) => state.redactions);
@@ -145,6 +151,7 @@ export function FabricOverlay({
     const canvas = fabricRef.current;
     const fabric = moduleRef.current;
     if (!canvas || !fabric) return;
+    const zoom = zoomRef.current;
 
     canvas.remove(...canvas.getObjects());
 
@@ -184,6 +191,7 @@ export function FabricOverlay({
   }
 
   function writeBack(target: FabricObject) {
+    const zoom = zoomRef.current;
     const id = target.editorId;
     if (!id) return;
 
@@ -199,6 +207,7 @@ export function FabricOverlay({
   function absorbFreehandPath(path: FabricObject) {
     const canvas = fabricRef.current;
     if (!canvas) return;
+    const zoom = zoomRef.current;
 
     // Convert Fabric's path into our own point list, then let `rebuild` redraw
     // it from the store so there is exactly one representation of the stroke.
@@ -229,6 +238,7 @@ export function FabricOverlay({
   }
 
   function installDrawingHandlers(canvas: FabricCanvas) {
+    const zoomOf = () => zoomRef.current;
     let startX = 0;
     let startY = 0;
     let preview: FabricObject | null = null;
@@ -247,8 +257,8 @@ export function FabricOverlay({
         const id = store.addObject({
           type: 'text',
           pageIndex,
-          x: startX / zoom,
-          y: startY / zoom,
+          x: startX / zoomOf(),
+          y: startY / zoomOf(),
           width: 240,
           text: 'Type here',
           fontSize: store.style.fontSize,
@@ -313,20 +323,20 @@ export function FabricOverlay({
       canvasRef?.remove(preview);
       preview = null;
 
-      const left = Math.min(startX, pointer.x) / zoom;
-      const top = Math.min(startY, pointer.y) / zoom;
-      const width = Math.abs(pointer.x - startX) / zoom;
-      const height = Math.abs(pointer.y - startY) / zoom;
+      const left = Math.min(startX, pointer.x) / zoomOf();
+      const top = Math.min(startY, pointer.y) / zoomOf();
+      const width = Math.abs(pointer.x - startX) / zoomOf();
+      const height = Math.abs(pointer.y - startY) / zoomOf();
 
       if (tool === 'line' || tool === 'arrow') {
         if (Math.hypot(pointer.x - startX, pointer.y - startY) < 4) return;
         store.addObject({
           type: tool,
           pageIndex,
-          x1: startX / zoom,
-          y1: startY / zoom,
-          x2: pointer.x / zoom,
-          y2: pointer.y / zoom,
+          x1: startX / zoomOf(),
+          y1: startY / zoomOf(),
+          x2: pointer.x / zoomOf(),
+          y2: pointer.y / zoomOf(),
           stroke: store.style.stroke,
           strokeWidth: store.style.strokeWidth,
           opacity: store.style.opacity,

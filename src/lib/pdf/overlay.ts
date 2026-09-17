@@ -1,5 +1,5 @@
 import { loadDoc, saveDoc } from './core';
-import { BlendMode, LineCapStyle, PDFName, degrees, rgb } from './lib';
+import { BlendMode, LineCapStyle, PDFName, PDFString, degrees, rgb } from './lib';
 import type { PDFDocument, PDFPage } from './lib';
 import { embedFont, sanitizeWinAnsi, wrapText } from './fonts';
 import { embedImageAuto } from './images';
@@ -362,13 +362,15 @@ function addLinkAnnotation(
   url: string,
 ) {
   const context = doc.context;
+  // `context.obj` turns bare strings into PDFName, so the URI — which must be a
+  // string object, not a name — is built explicitly.
   const annotation = context.obj({
     Type: 'Annot',
     Subtype: 'Link',
     Rect: [x, y, x + width, y + height],
     Border: [0, 0, 0],
     C: [0, 0, 1],
-    A: context.obj({ Type: 'Action', S: 'URI', URI: url }),
+    A: context.obj({ Type: 'Action', S: 'URI', URI: PDFString.of(url) }),
   });
 
   const ref = context.register(annotation);
