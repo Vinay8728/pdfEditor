@@ -1,0 +1,57 @@
+# Publishes a live preview of the site to GitHub Pages on every push.
+#
+# This exists so the app can be opened and tested in a real browser before any
+# Netlify setup is done. It builds with a base path because Pages serves the
+# site from /<repo>/ rather than the domain root.
+name: Preview
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build for the Pages sub-path
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /pdfEditor
+
+      # Without this, Pages runs Jekyll, which silently drops every path
+      # starting with an underscore — including all of Next's /_next assets.
+      - name: Disable Jekyll
+        run: touch out/.nojekyll
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

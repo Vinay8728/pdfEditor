@@ -80,6 +80,16 @@ jobs:
             echo "HTML pages: $(find out -name '*.html' 2>/dev/null | wc -l)"
           } >> ci-report.txt
 
+      # A single downloadable file that can be dropped straight onto Netlify at
+      # app.netlify.com/drop, for a deploy with no GitHub connection at all.
+      - name: Package the site for manual upload
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: netlify-site
+          path: out/
+          retention-days: 30
+
       - name: Upload test report
         if: steps.e2e.outcome == 'failure'
         uses: actions/upload-artifact@v4

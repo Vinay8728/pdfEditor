@@ -5,6 +5,7 @@ import { CloudUpload } from 'lucide-react';
 import type { PanelProps } from './ToolWorkbench';
 import { Alert, Button, Field, Select, Spinner } from '@/components/ui/controls';
 import { baseName, formatBytes } from '@/lib/utils';
+import { withBase } from '@/lib/basePath';
 
 interface EndpointStatus {
   configured: boolean;
@@ -36,7 +37,7 @@ export function ConvertTool({ files, busy, setError, slug }: PanelProps & { slug
     let cancelled = false;
     (async () => {
       try {
-        const response = await fetch('/api/convert', { method: 'GET' });
+        const response = await fetch(withBase('/api/convert'), { method: 'GET' });
         const body = (await response.json()) as EndpointStatus;
         if (!cancelled) setStatus(body);
       } catch {
@@ -77,7 +78,7 @@ export function ConvertTool({ files, busy, setError, slug }: PanelProps & { slug
       body.append('from', sourceExt);
       body.append('to', target);
 
-      const response = await fetch('/api/convert', { method: 'POST', body });
+      const response = await fetch(withBase('/api/convert'), { method: 'POST', body });
 
       if (!response.ok) {
         const detail = await response.json().catch(() => null);

@@ -6,6 +6,8 @@
  * related may run during the static export build.
  */
 
+import { withBase } from '../basePath';
+
 export interface PdfTextItem {
   str: string;
   /** [scaleX, skewX, skewY, scaleY, translateX, translateY] in PDF user space. */
@@ -68,7 +70,7 @@ async function getPdfjs(): Promise<PdfjsModule> {
   if (!modulePromise) {
     modulePromise = import('pdfjs-dist').then((mod) => {
       // The worker is copied into /public by scripts/copy-pdf-worker.mjs.
-      mod.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+      mod.GlobalWorkerOptions.workerSrc = withBase('/pdf.worker.min.mjs');
       return mod;
     });
   }
@@ -92,9 +94,9 @@ export async function loadPdfDocument(
   const task = pdfjs.getDocument({
     data: copy,
     password: options.password,
-    cMapUrl: '/pdfjs/cmaps/',
+    cMapUrl: withBase('/pdfjs/cmaps/'),
     cMapPacked: true,
-    standardFontDataUrl: '/pdfjs/standard_fonts/',
+    standardFontDataUrl: withBase('/pdfjs/standard_fonts/'),
     useSystemFonts: true,
     isEvalSupported: false,
   });

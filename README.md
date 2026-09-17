@@ -2,6 +2,24 @@
 
 A complete, browser-based PDF toolkit — a Sejda-style editor built with Next.js.
 
+> ### Just want it live? Start here.
+>
+> **You do not need to download or upload any files.**
+>
+> 1. **Try it first** — every push publishes a live preview to GitHub Pages:
+>    **https://vinay8728.github.io/pdfEditor/**
+>    (One-time: repo **Settings → Pages → Source: GitHub Actions**, if it is not on already.)
+> 2. **Go live** — at [app.netlify.com](https://app.netlify.com): **Add new site → Import an existing project → GitHub → `pdfEditor` → Deploy**.
+>    Netlify reads [`netlify.toml`](netlify.toml), so leave every setting as detected.
+> 3. **Custom domain** — Netlify → **Domain management → Add a domain → `vinaybi.in`**, then
+>    follow [the domain steps below](#custom-domain-vinaybiin).
+>
+> **Prefer to upload a single file instead?** Open the newest run under the repo's
+> **Actions** tab, download the **`netlify-site`** artifact (one `.zip`), and drag it
+> onto [app.netlify.com/drop](https://app.netlify.com/drop). Note that the
+> Office-conversion endpoint does not exist in a drag-and-drop deploy — everything
+> else works, because it all runs in the browser.
+
 **Every core operation runs on the user's own device.** Files are read into page
 memory, processed by JavaScript and WebAssembly in the browser, and written back
 out as a download. Nothing is uploaded. The single exception is Office-format
